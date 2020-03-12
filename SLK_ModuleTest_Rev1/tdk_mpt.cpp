@@ -14,7 +14,7 @@
 
  // SLK MT SW version 
 #define SLKMTSWVERSIONMAJOR	1
-#define SLKMTSWVERSIONMINOR	5
+#define SLKMTSWVERSIONMINOR	6
 
 
 
@@ -132,56 +132,56 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 	// Copy corresponding Cfg file to folder
 	switch (testCase) {
 	case INVS_TEST_CASE_1:
-		ss << "TE-*-01_rev*.cfg";
+		ss << "SLK_Flex-01_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_2:
-		ss << "TE-*-02_rev*.cfg";
+		ss << "SLK_Flex-02_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_3:
-		ss << "TE-*-03_rev*.cfg";
+		ss << "SLK_Flex-03_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_4:
-		ss << "TE-*-04_rev*.cfg";
+		ss << "SLK_*-04_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_5:
-		ss << "TE-*-05_rev*.cfg";
+		ss << "SLK_*-05_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_6:
-		ss << "TE-*-06_rev*.cfg";
+		ss << "SLK_*-06_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	case INVS_TEST_CASE_7:
-		ss << "TE-*-07_rev*.cfg";
+		ss << "SLK_*-07_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
 	default:
-		ss << "TE-*-05_rev*.cfg";
+		ss << "SLK_*-05_rev*.cfg";
 		CfgFilethiscase = ss.str();
 		CfgFile = CfgDir + "\\" + CfgFilethiscase;
 		SrcCfgFile = (char *)CfgFileRootPath;

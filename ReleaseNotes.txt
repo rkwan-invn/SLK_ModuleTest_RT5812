@@ -1,0 +1,67 @@
+3/11/2020 NP Rev 1.6
+Changes in this release are:-
+1.	Update Calibration algorithms for:
+	a.	improvement of NUM2 failure issue
+	b.	improvemnt of ToF tuning
+	c. 	improvement of Edge Cropping
+	d. 	improvement of Contrast Cluster Check
+
+2.	Update Temperature Check
+	Add a user configurable upper limit for sensor temperature.
+	The temperature check now supports decimal values.
+	Add BinCode 10.10 for error Temp>Temp-max
+	Give BinCode 10.04 back to error Temp Reg Reading = 0
+
+3.     Update cfg files for tuning improvements
+	- Rename the cfg files into Generic Flex cfgs for Test Stations 1 - 3 and Specific Module cfgs for Test Stations 4 - 7.
+
+1/9/2020 NP Rev 1.5
+Changes in this release are:-
+1. Update Encryption Block Check function MT_Chk_Encrypt
+        -  Add Full Image Encryption-Decryption & Verify step
+           Run an Image with Encryption and then Decryption & Verify to make sure the whole Encryption block is running good
+           Failure BinCode 21.34
+        -  Add BinCode for Encryption Session Close failure
+           Failure BinCode 21.35
+
+2. Change Realtek buffer size to 10240 from 4096
+        -  To work with the Full Image Encryption-Decryption & Verify step in encryption check
+
+3. Change DMP FW to Ver 1.1.2 from 1.1.8
+	-  To address the BIN Code: 60.04 issue
+
+12/11/2019 NP Rev 1.4
+Changes in this release are:-
+1.  Exposure of LotID and WaferID in the MT_Chk_ASICID(PortCnt, DieID, WaferID, (char *)LotID),
+	So that a unique ChipID can be formed from LotID+WaferID+DieID then
+
+12/6/2019 NP Rev 1.3
+Changes in this release are:-
+1.  SN folder change
+2.	Memory leakage issue fixed.
+3.	Internal ToF Issue fixed.
+
+12/4/2019 NP Rev 1.2
+1. 	No more loopback as I told you before to set 
+
+        //ContRun = std::cin.get();
+        ContRun = '0';
+2. 	SN change to 23 bytes and unsigned char *
+	Format given as the example in the code.
+
+       strcpy_s((char*)SN, MTSTRINGMAX, "8SJYAAE0023HJ1KSYMDSSSS");
+3.  Each SN module will have its own log.csv and _Target.bmp
+    with clear timing record if tested for multiple times.
+
+11/21/2019 NP Rev 1.1
+Changes in this release are:-
+1. 	Encryption Check Added.
+	i)	For Encryption: OpenSessionAllowed-Fail, it would be BIN Code: 21.32.
+	ii)	For Encryption: IID_VerifySessionOpen-Fail, it would be BIN Code: 21.33.
+NOTES:
+    Along with this change, the setup has to be power-on and power-off after every single run of the module test.
+    So we need to unplug & plug the USB cable for every single run now.
+    Otherwise, weird BIN Code: 21.-1 would be observed for incorrect run.
+
+10/21/2019 NP Rev 1.0
+-First Evaluation Release
