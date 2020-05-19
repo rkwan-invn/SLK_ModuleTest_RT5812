@@ -1,8 +1,12 @@
-3/11/2020 NP Rev 1.6
+5/17/2020 NP Rev 1.7
+Changes in this release are:-
+1.     Update test stations 1 to 3 cfg files for JYT reported 42.00 issues
+
+3/12/2020 NP Rev 1.6
 Changes in this release are:-
 1.	Update Calibration algorithms for:
 	a.	improvement of NUM2 failure issue
-	b.	improvemnt of ToF tuning
+	b.	improvement of ToF tuning
 	c. 	improvement of Edge Cropping
 	d. 	improvement of Contrast Cluster Check
 
