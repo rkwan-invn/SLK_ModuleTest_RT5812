@@ -1,3 +1,9 @@
+5/22/2020 NP Rev 1.8
+Changes in this release are:-
+1.     Update test stations 1 to 7 cfg files for reported issues at Victory
+
+2.     Fix the revision number update miss in 1.7 to 1.8 now
+
 5/17/2020 NP Rev 1.7
 Changes in this release are:-
 1.     Update test stations 1 to 3 cfg files for JYT reported 42.00 issues
