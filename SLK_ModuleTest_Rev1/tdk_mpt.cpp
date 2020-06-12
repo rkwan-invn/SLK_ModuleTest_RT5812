@@ -6,6 +6,28 @@
 #include <fstream>
 #include "tdk_mpt.h"
 
+#include <stdio.h>
+#include <Windows.h>
+#include <ObjIdl.h>
+#include <gdiplus.h>
+
+using namespace Gdiplus;
+#pragma comment (lib, "Gdiplus.lib")
+
+GdiplusStartupInput         gdiplusStartupInput;
+ULONG_PTR                   gdiplusToken;
+
+VOID displayBMP(HDC hdc, const wchar_t* ImgFName)
+{
+	Graphics    graphics(hdc);
+
+	//Image       bmpImg(L"C:\\8SJYAAE0023HJ1KSYMDSSSS_2020-06-10-01-10-40_TargetImage.bmp");
+	Image       bmpImg(ImgFName);
+	UINT        width = bmpImg.GetWidth();
+	UINT        height = bmpImg.GetHeight();
+	graphics.DrawImage(&bmpImg, 15, 15, width * 2, height * 2);
+
+}
 /*
  * Here include the target platform hardware apis header files, like 
  * RealTek platform APIs
@@ -14,7 +36,7 @@
 
  // SLK MT SW version 
 #define SLKMTSWVERSIONMAJOR	1
-#define SLKMTSWVERSIONMINOR	8
+#define SLKMTSWVERSIONMINOR	9
 
 
 
@@ -54,15 +76,15 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 
 	// Data Directory
 	std::string DataDir(reinterpret_cast<char*>(invsBase));
-#if 0
-	std::string ImgDir = DataDir + "\\OutImages";
-#endif
+	std::string ImgDir = DataDir;
+	std::string ImgFileName = ImgDir;
 	std::string CfgDir = DataDir + "\\cfgfile";
 	std::string CfgFile;
 	std::string SrcCfgFile;
 	std::string SrcCfgFileName;
 	std::string CfgFilethiscase;
-	
+	std::string SNLogFileName;
+
 
 
 	//Timer ----------------------------------------------------------------------------------------------------
@@ -88,7 +110,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 
 
 	// Subfolder to store Images
-	char MakeImageFolder[MTSTRINGMAX];
+//	char MakeImageFolder[MTSTRINGMAX];
 	char OpenImageFolder[MTSTRINGMAX];
 	char CloseImageFolder[MTSTRINGMAX];
 	char DC[MTSTRINGMAX];
@@ -100,12 +122,8 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 
 
 	TIMERSTART;
-#if 0
-	sprintf_s(MakeImageFolder, MTSTRINGMAX, "mkdir %s\\%s", ImgDir.c_str(), DC);
-	sprintf_s(OpenImageFolder, MTSTRINGMAX, "start /W Explorer %s%s", ImgDir.c_str(), DC);
-	sprintf_s(CloseImageFolder, MTSTRINGMAX, "taskkill /F /FI \"IMAGENAME eq explorer.exe\" /FI \"WINDOWTITLE eq %s\" ", DC);
-	system(MakeImageFolder);
-#endif
+//	//sprintf_s(MakeImageFolder, MTSTRINGMAX, "mkdir %s\\%s", ImgDir.c_str(), DC);
+	//system(MakeImageFolder);
 
 	// === Load Nucleo COM Port No from file ===== 
 	uint64_t MYCOMPORT[MTSESSIONMAX];
@@ -166,20 +184,20 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		SrcCfgFile = (char *)CfgFileRootPath;
 		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
 		break;
-	case INVS_TEST_CASE_6:
-		ss << "SLK_*-06_rev*.cfg";
-		CfgFilethiscase = ss.str();
-		CfgFile = CfgDir + "\\" + CfgFilethiscase;
-		SrcCfgFile = (char *)CfgFileRootPath;
-		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
-		break;
-	case INVS_TEST_CASE_7:
-		ss << "SLK_*-07_rev*.cfg";
-		CfgFilethiscase = ss.str();
-		CfgFile = CfgDir + "\\" + CfgFilethiscase;
-		SrcCfgFile = (char *)CfgFileRootPath;
-		sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
-		break;
+	//case INVS_TEST_CASE_6:
+	//	ss << "SLK_*-06_rev*.cfg";
+	//	CfgFilethiscase = ss.str();
+	//	CfgFile = CfgDir + "\\" + CfgFilethiscase;
+	//	SrcCfgFile = (char *)CfgFileRootPath;
+	//	sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
+	//	break;
+	//case INVS_TEST_CASE_7:
+	//	ss << "SLK_*-07_rev*.cfg";
+	//	CfgFilethiscase = ss.str();
+	//	CfgFile = CfgDir + "\\" + CfgFilethiscase;
+	//	SrcCfgFile = (char *)CfgFileRootPath;
+	//	sprintf_s(CopyCfgFile, MTSTRINGMAX, "copy %s\\%s %s", SrcCfgFile.c_str(), CfgFilethiscase.c_str(), CfgFile.c_str());
+	//	break;
 	default:
 		ss << "SLK_*-05_rev*.cfg";
 		CfgFilethiscase = ss.str();
@@ -220,12 +238,12 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 	// ===== Deal With Diff Test Cases =====
 	// Pass Through for TEST_CASE_0, TEST_CASE_5
 	// Run corresponding Cfg file for other cases
-	if (testCase == INVS_TEST_CASE_0 || testCase == INVS_TEST_CASE_8) {
+	if (testCase == INVS_TEST_CASE_0 || testCase == INVS_TEST_CASE_6 || testCase == INVS_TEST_CASE_7 || testCase == INVS_TEST_CASE_8) {
 		std::cout << "TEST CASE " << testCase << " Skipped. It Will Be Performed In other TEST CASES" << std::endl;
 		return INVS_SUCCESS;
 	}
 	else if (	testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_2 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_4||
-				testCase == INVS_TEST_CASE_5 || testCase == INVS_TEST_CASE_6 || testCase == INVS_TEST_CASE_7) {
+				testCase == INVS_TEST_CASE_5) {
 		std::cout << "TEST CASE " << testCase << " Selected. " << std::endl;
 	}
 	else {
@@ -280,9 +298,21 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		}
 		if ((rc = MT_Input_SN(PortCnt, (unsigned char *)SNs)) != MTDLL_OK) { printf("MT Input SN error\r\n");	return -1; }
 
+		std::string SNStr(reinterpret_cast<char*>(SNs[0]));
+		ImgDir = ImgDir + "\\" + SNStr;
+		//sprintf_s(OpenImageFolder, MTSTRINGMAX, "start /W Explorer %s", ImgDir.c_str());
+		//sprintf_s(CloseImageFolder, MTSTRINGMAX, "taskkill /F /FI \"IMAGENAME eq explorer.exe\" /FI \"WINDOWTITLE eq %s\" ", SNStr.c_str());
+
 		// ===== Write CFG to SN Log file ======
 		if ((rc = MT_WrtCFGtoSNLog(PortCnt, (char *)SNLogFile, SLKSWVer)) != MTDLL_OK) { printf("MT Init SN LOG error\r\n");		return -1; }
 		timefile << "Init LOG	"; TIMEREND;
+
+		std::string SNLogFileName(reinterpret_cast<char*>(SNLogFile[0]));
+		std::string substr = "_TargetImage.bmp";
+		ImgFileName = SNLogFileName;
+		ImgFileName.replace(ImgFileName.begin()+ImgFileName.length()-4, ImgFileName.end(), substr.begin(), substr.end());
+		std::wstring wImageFileName(ImgFileName.begin(), ImgFileName.end());
+		const wchar_t* imagefilenm = wImageFileName.c_str();
 
 		// ===== Power ON =====
 		TIMERSTART;
@@ -400,15 +430,14 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		//if ((rc = GPIOWrite(PortCnt, 6, 2, 1)) != MTDLL_OK) { printf("MT GPIO Write error\r\n");		return -1; }
 		timefile << "GPIO Ld Target	"; TIMEREND;
 #else
-		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_5 || testCase == INVS_TEST_CASE_6) {
+		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_2 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_5) {
 			std::cout << "This station has No Target Loading Needed " << std::endl;
 		}
-		else if (testCase == INVS_TEST_CASE_7 ) {
-			std::cout << "SPI COMM Test Only, No Target Loading Needed " << std::endl;
-		}
+		//else if (testCase == INVS_TEST_CASE_7 ) {
+		//	std::cout << "SPI COMM Test Only, No Target Loading Needed " << std::endl;
+		//}
 		else {
 			TIMERSTART;
-#if 0
 			bool Target_Ready = false;
 			std::string Target_Userin = "";
 			std::cout << std::endl;
@@ -416,21 +445,32 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 			std::cout << std::endl;
 			std::cout << "Please put Target Down, press Enter when target is loaded >>";
 			std::cin.get();
-#endif
-  		std::cout << std::endl;
-		std::cout << std::endl;
-		std::cout << "Please put Target Down, press OK button when target is loaded correctly! >>";
-		std::cout << "\r\n";
-		std::cout << std::endl;
-		
-		if ((rc = MT_ImageScan(PortCnt, (char *)SNLogFile, "TargetImage", true, 1)) != MTDLL_OK) { printf("MT Image Scan error\r\n");		return -1; }
 
-#if 0
+			//system(OpenImageFolder);
+			HWND                hBmpWnd;
+			HDC                 hdc;
+			WNDCLASS            wndClass;
 
-			system(OpenImageFolder);
+			//std::cout << "Open the window, display the BMP image!\n";
+
+			//hConsole = GetConsoleWindow();
+
+			// Initialize GDI+.
+			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+			hBmpWnd = CreateWindow(TEXT("static"), NULL, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 300, 150, NULL, NULL, GetModuleHandle(0), NULL);
+
+
+
 			while (!Target_Ready) {
 				//===== Image samples =====
-				if ((rc = MT_ImageScan(PortCnt, 1)) != MTDLL_OK) { printf("MT Image Scan error\r\n");		return -1; }
+				if ((rc = MT_ImageScan(PortCnt, (char *)SNLogFile, "TargetImage", false, 1)) != MTDLL_OK) { printf("MT Image Scan error\r\n");		return -1; }
+
+				ShowWindow(hBmpWnd, SW_SHOW);
+				UpdateWindow(hBmpWnd);
+				hdc = GetWindowDC(hBmpWnd);
+
+				displayBMP(hdc, imagefilenm);
 
 				std::cout << std::endl;
 				std::cout << std::endl;
@@ -445,8 +485,11 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 				Target_Ready = ((Target_Userin == "Y") ? true : false);
 			}
 
-			system(CloseImageFolder);
-#endif
+			//system(CloseImageFolder);
+			GdiplusShutdown(gdiplusToken);
+			CloseWindow(hBmpWnd);
+			DestroyWindow(hBmpWnd);
+
 			std::cout << std::endl;
 			std::cout << "Please Keep Target Loaded";
 			std::cout << std::endl;
@@ -469,7 +512,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		//if ((rc = GPIOWrite(PortCnt, 6, 2, 0)) != MTDLL_OK) { printf("MT GPIO Write error\r\n");		return -1; }
 		timefile << "GPIO Rlz Target	"; TIMEREND;
 #else
-		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_7) {
+		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_2 || testCase == INVS_TEST_CASE_3) {
 			std::cout << "Test Continues " << std::endl;
 		}
 		else {
