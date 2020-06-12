@@ -1,3 +1,7 @@
+6/11/2020 NP Rev 1.10
+Changes in this release are:-
+1.     Update test station 4 Window GUI
+
 6/10/2020 NP Rev 1.9
 Changes in this release are:-
 1.     Update test stations 1 to 5 cfg files for reported issues so far.
@@ -8,7 +12,6 @@ Changes in this release are:-
 
 4.     Remove test station 4 fake finger press GUI and switched back to old YB2 release console mode but pop-up window for Finger Image.
  
-
 5/22/2020 NP Rev 1.8
 Changes in this release are:-
 1.     Update test stations 1 to 7 cfg files for reported issues at Victory

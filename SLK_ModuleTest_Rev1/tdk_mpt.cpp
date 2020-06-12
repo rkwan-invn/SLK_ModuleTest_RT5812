@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include <vector>
 #include "stdlib.h"
 #include "ModuleTestDLL.h"
@@ -6,28 +6,6 @@
 #include <fstream>
 #include "tdk_mpt.h"
 
-#include <stdio.h>
-#include <Windows.h>
-#include <ObjIdl.h>
-#include <gdiplus.h>
-
-using namespace Gdiplus;
-#pragma comment (lib, "Gdiplus.lib")
-
-GdiplusStartupInput         gdiplusStartupInput;
-ULONG_PTR                   gdiplusToken;
-
-VOID displayBMP(HDC hdc, const wchar_t* ImgFName)
-{
-	Graphics    graphics(hdc);
-
-	//Image       bmpImg(L"C:\\8SJYAAE0023HJ1KSYMDSSSS_2020-06-10-01-10-40_TargetImage.bmp");
-	Image       bmpImg(ImgFName);
-	UINT        width = bmpImg.GetWidth();
-	UINT        height = bmpImg.GetHeight();
-	graphics.DrawImage(&bmpImg, 15, 15, width * 2, height * 2);
-
-}
 /*
  * Here include the target platform hardware apis header files, like 
  * RealTek platform APIs
@@ -36,8 +14,280 @@ VOID displayBMP(HDC hdc, const wchar_t* ImgFName)
 
  // SLK MT SW version 
 #define SLKMTSWVERSIONMAJOR	1
-#define SLKMTSWVERSIONMINOR	9
+#define SLKMTSWVERSIONMINOR	10
 
+//#include "resource.h"
+//#pragma comment(lib, "user32")
+
+#include <atlbase.h>
+#include <atlconv.h>
+#include <Windows.h>
+#include <ObjIdl.h>
+#include <gdiplus.h>
+
+using namespace Gdiplus;
+#pragma comment (lib, "Gdiplus.lib")
+
+#if 1
+HDC         imageDC;        // the DC to hold our image
+HBITMAP     imageBmp;       // the actual bitmap which contains the image (will be put in the DC)
+HBITMAP     imageBmpOld;    // the DC's old bitmap (for cleanup)
+HINSTANCE	inst;
+
+const int   screenSize_X = 320;
+const int   screenSize_Y = 200;
+
+GdiplusStartupInput         gdiplusStartupInput;
+ULONG_PTR                   gdiplusToken;
+bool Target_Ready = false;
+#define ID_CONTINUE_BUTTON					0x0011
+
+
+
+///////////////////////////////
+///////////////////////////////
+// Function to load the image into our DC so we can draw it to the screen
+void loadImage(const char* pathname)
+{
+	//	imageDC = CreateCompatibleDC(NULL);     // create an offscreen DC
+
+	imageBmp = (HBITMAP)LoadImageA(         // load the bitmap from a file
+		NULL,                           // not loading from a module, so this is NULL
+		pathname,                       // the path we're loading from
+		IMAGE_BITMAP,                   // we are loading a bitmap
+		0, 0,                            // don't need to specify width/height
+		LR_DEFAULTSIZE | LR_LOADFROMFILE// use the default bitmap size (whatever the file is), and load it from a file
+	);
+
+	imageBmpOld = (HBITMAP)SelectObject(imageDC, imageBmp);  // put the loaded image into our DC
+}
+
+
+///////////////////////////////
+// Function to clean up
+void cleanUpImage()
+{
+	SelectObject(imageDC, imageBmpOld);      // put the old bmp back in our DC
+	DeleteObject(imageBmp);                 // delete the bmp we loaded
+//	DeleteDC(imageDC);                      // delete the DC we created
+}
+
+///////////////////////////////
+///////////////////////////////
+// The function to draw our image to the display (the given DC is the screen DC)
+void drawImage(HDC screen)
+{
+	BitBlt(
+		screen,         // tell it we want to draw to the screen
+		80, 65,            // as position 0,0 (upper-left corner)
+		screenSize_X,   // width of the rect to draw
+		screenSize_Y,   // height of the rect
+		imageDC,        // the DC to get the rect from (our image DC)
+		0, 0,            // take it from position 0,0 in the image DC
+		SRCCOPY         // tell it to do a pixel-by-pixel copy
+	);
+}
+
+
+wchar_t * char2wchar(const char* cchar)
+{
+	wchar_t *m_wchar;
+	int len = MultiByteToWideChar(CP_ACP, 0, cchar, strlen(cchar), NULL, 0);
+	m_wchar = new wchar_t[len + 1];
+	MultiByteToWideChar(CP_ACP, 0, cchar, strlen(cchar), m_wchar, len);
+	m_wchar[len] = '\0';
+	return m_wchar;
+}
+void displayImage(const char* pathName, HWND  hWnd)
+{
+
+	WCHAR		*imagePath = NULL;
+	HDC			hdc = GetWindowDC(hWnd);
+	
+	if (NULL != pathName && hdc != 0) {
+		Graphics	graphics(hdc);
+		imagePath = char2wchar(pathName);
+		if (imagePath) {
+			Image		bmpImg(imagePath);
+			UINT        width = bmpImg.GetWidth();
+			UINT        height = bmpImg.GetHeight();
+			graphics.DrawImage(&bmpImg, 25, 85, width * 2, height * 2);
+		}
+		ReleaseDC(hWnd, hdc);
+		if (imagePath) {
+			delete imagePath;
+		}
+	}
+}
+
+///////////////////////////////
+///////////////////////////////
+// A callback to handle Windows messages as they happen
+LRESULT CALLBACK wndProc(HWND wnd, UINT msg, WPARAM w, LPARAM l)
+{
+	HWND					hReadyBtn;
+	HDC					hdc = 0;
+	int					wmID, wmEvent;
+	// what kind of message is this?
+	switch (msg){
+	case WM_CREATE:
+		// Create the buttons
+		hReadyBtn = CreateWindow(L"BUTTON", L"Continue",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			105,
+			180,
+			80,
+			30,
+			wnd,
+			(HMENU)ID_CONTINUE_BUTTON,
+			(HINSTANCE)GetWindowLongPtr(wnd, GWLP_HINSTANCE),
+			NULL);
+#if 0
+		hdc = GetWindowDC(wnd);
+		if (hdc) {
+			Graphics    graphics(hdc);
+			Color       color = Color(255, 255, 255, 255);
+			SolidBrush  brush(Color(255, 0, 0, 255));
+			FontFamily  fontFamily(L"Microsoft YaHei");
+			Font        font(&fontFamily, 24, FontStyleRegular, UnitPixel);
+			PointF      pointF(10.0f, 60.0f);
+
+			graphics.DrawString(L"   请下压假手指,之后点击Continue按钮   ", -1, &font, pointF, &brush);
+
+			ReleaseDC(wnd, hdc);
+		}
+#endif
+		break;
+
+	case WM_COMMAND:
+		wmID = LOWORD(w);
+		wmEvent = HIWORD(w);
+		if (wmID == ID_CONTINUE_BUTTON) {
+			Target_Ready = true;
+		}
+		break;
+
+		// we are interested in WM_PAINT, as that is how we draw
+		// MGAO: We don't care the WM_PARINT, the codes will cause the flashing screen issue.
+
+	// we are also interested in the WM_DESTROY message, as that lets us know when to close the window
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+		//return TRUE;
+
+	default: 
+		DefWindowProc(wnd, msg, w, l);
+
+	}
+	// for everything else, let the default window message handler do its thing
+	return 0;
+
+}
+
+
+///////////////////////////////
+///////////////////////////////
+// A function to create the window and get it set up
+
+LRESULT CALLBACK imgWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	int    wmID, wmEvent;
+	HDC     hdc;
+	HWND    hReadyButton;
+
+	switch (message) {
+	case WM_CREATE:
+		// Create the buttons
+		hReadyButton = CreateWindow(L"BUTTON", L"Continue",
+			WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			105,
+			180,
+			80,
+			30,
+			hWnd,
+			(HMENU)ID_CONTINUE_BUTTON,
+			(HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE),
+			NULL);
+
+		break;
+
+	case WM_COMMAND:
+	{
+		wmID = LOWORD(wParam);
+		wmEvent = HIWORD(wParam);
+		if (wmID == ID_CONTINUE_BUTTON) {
+			Target_Ready = true;
+		}
+		//isWndClosed = true;
+	}
+
+	break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		//isWndClosed = true;
+		break;
+
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+
+	}
+	return 0;
+}
+
+void displayAlert(HWND  hWnd)
+{
+#if 1
+	HDC hdc = GetWindowDC(hWnd);
+	if (hdc) {
+		Graphics    graphics(hdc);
+		Color       color = Color(255, 255, 255, 255);
+		SolidBrush  brush(Color(255, 0, 0, 255));
+		FontFamily  fontFamily(L"Microsoft YaHei");
+		Font        font(&fontFamily, 16, FontStyleRegular, UnitPixel);
+		PointF      pointF(10.0f, 60.0f);
+		graphics.DrawString(L"   请下压假手指,之后点击Continue按钮   ", -1, &font, pointF, &brush);
+
+		ReleaseDC(hWnd, hdc);
+	}
+#endif
+}
+
+HWND createWindow(HINSTANCE inst)
+{
+	HWND                hWnd;
+	WNDCLASSEX          wndClassEx = { sizeof(WNDCLASSEX),
+								   CS_DBLCLKS,
+									imgWndProc,
+									0,
+									0,
+									GetModuleHandle(0),
+									LoadIcon(0,IDI_APPLICATION),
+									LoadCursor(0,IDC_ARROW),
+									HBRUSH(COLOR_WINDOW + 1),
+									0,
+									L"TDKImageWindow",
+									LoadIcon(0,IDI_APPLICATION)
+	};
+
+	ATOM  ret= RegisterClassEx(&wndClassEx);
+
+	// Initialize GDI+.
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+	hWnd = CreateWindowEx(0, L"TDKImageWindow", L"TDK TCFS2000",
+		WS_OVERLAPPEDWINDOW | WS_EX_TOPMOST, 20, 20,
+		320, 260, 0, 0, GetModuleHandle(0), 0);
+	if (hWnd == NULL) {
+		DWORD error = GetLastError();
+		printf("Failed to create window:%x\r\n", error);
+	}
+	else{
+		ShowWindow(hWnd, SW_SHOWDEFAULT);
+	}
+	return hWnd;
+}
+#endif
 
 
 extern unsigned char CfgFileRootPath[];
@@ -72,7 +322,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 	char BinCodeAll[MTSESSIONMAX*MTSTRINGMAX];
 	//std::string BinCodeAll[MTSESSIONMAX];
 	char SNLogFile[MTSESSIONMAX][MTSTRINGMAX] = {};
-
+	HWND imageWnd = NULL;
 
 	// Data Directory
 	std::string DataDir(reinterpret_cast<char*>(invsBase));
@@ -85,6 +335,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 	std::string CfgFilethiscase;
 	std::string SNLogFileName;
 
+	char imagefilename[MTSTRINGMAX];
 
 
 	//Timer ----------------------------------------------------------------------------------------------------
@@ -300,8 +551,8 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 
 		std::string SNStr(reinterpret_cast<char*>(SNs[0]));
 		ImgDir = ImgDir + "\\" + SNStr;
-		//sprintf_s(OpenImageFolder, MTSTRINGMAX, "start /W Explorer %s", ImgDir.c_str());
-		//sprintf_s(CloseImageFolder, MTSTRINGMAX, "taskkill /F /FI \"IMAGENAME eq explorer.exe\" /FI \"WINDOWTITLE eq %s\" ", SNStr.c_str());
+		sprintf_s(OpenImageFolder, MTSTRINGMAX, "start /W Explorer %s", ImgDir.c_str());
+		sprintf_s(CloseImageFolder, MTSTRINGMAX, "taskkill /F /FI \"IMAGENAME eq explorer.exe\" /FI \"WINDOWTITLE eq %s\" ", SNStr.c_str());
 
 		// ===== Write CFG to SN Log file ======
 		if ((rc = MT_WrtCFGtoSNLog(PortCnt, (char *)SNLogFile, SLKSWVer)) != MTDLL_OK) { printf("MT Init SN LOG error\r\n");		return -1; }
@@ -311,8 +562,6 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		std::string substr = "_TargetImage.bmp";
 		ImgFileName = SNLogFileName;
 		ImgFileName.replace(ImgFileName.begin()+ImgFileName.length()-4, ImgFileName.end(), substr.begin(), substr.end());
-		std::wstring wImageFileName(ImgFileName.begin(), ImgFileName.end());
-		const wchar_t* imagefilenm = wImageFileName.c_str();
 
 		// ===== Power ON =====
 		TIMERSTART;
@@ -382,12 +631,12 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		TIMERSTART;
 		if ((rc = MT_Chk_IDD(PortCnt)) != MTDLL_OK) { printf("MT IDD Chk error\r\n");		return -1; }
 		timefile << "IDD Check	"; TIMEREND;
-
+#if 1
 		//===== Encryption Chk =====
 		TIMERSTART;
 		if ((rc = MT_Chk_Encrypt(PortCnt)) != MTDLL_OK) { printf("MT Encryption Chk error\r\n");		return -1; }
 		timefile << "Encryption Chk	"; TIMEREND;
-
+#endif
 		// Exit Test if EncChk fails
 		int PassFail_EncChk[MTSESSIONMAX];
 
@@ -443,34 +692,39 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 			std::cout << std::endl;
 			std::cout << std::endl;
 			std::cout << std::endl;
-			std::cout << "Please put Target Down, press Enter when target is loaded >>";
-			std::cin.get();
+			std::cout << "Please put Target Down >>";
 
+			// std::cin.get();
+			Target_Ready = false;
+		    imageWnd = createWindow(inst);
+			SetFocus(imageWnd);
+			displayAlert(imageWnd);
 			//system(OpenImageFolder);
-			HWND                hBmpWnd;
-			HDC                 hdc;
-			WNDCLASS            wndClass;
+			//===== Image samples =====
 
-			//std::cout << "Open the window, display the BMP image!\n";
+			MSG msg;
+			int timer = 0;
+			sprintf_s(imagefilename, MTSTRINGMAX, "%s", ImgFileName.c_str());
+			while (PeekMessage(&msg, imageWnd, 0, 0, PM_REMOVE) >= 0) {
+				if (msg.message == WM_LBUTTONDOWN) {
+					Target_Ready = true;
+				}
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+				if (Target_Ready)
+					break;
+			}
+			if ((rc = MT_ImageScan(PortCnt, (char *)SNLogFile, "TargetImage", false, 1)) != MTDLL_OK) { 
+				printf("MT Image Scan error\r\n");		
+				return -1; 
+			}
 
-			//hConsole = GetConsoleWindow();
+			displayImage(imagefilename, imageWnd);
 
-			// Initialize GDI+.
-			GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-			hBmpWnd = CreateWindow(TEXT("static"), NULL, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 300, 150, NULL, NULL, GetModuleHandle(0), NULL);
-
-
-
+#if 0
 			while (!Target_Ready) {
 				//===== Image samples =====
 				if ((rc = MT_ImageScan(PortCnt, (char *)SNLogFile, "TargetImage", false, 1)) != MTDLL_OK) { printf("MT Image Scan error\r\n");		return -1; }
-
-				ShowWindow(hBmpWnd, SW_SHOW);
-				UpdateWindow(hBmpWnd);
-				hdc = GetWindowDC(hBmpWnd);
-
-				displayBMP(hdc, imagefilenm);
 
 				std::cout << std::endl;
 				std::cout << std::endl;
@@ -482,14 +736,12 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 				mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 
 				std::cin >> Target_Userin;
+				//cleanUpImage();
+
 				Target_Ready = ((Target_Userin == "Y") ? true : false);
 			}
-
+#endif
 			//system(CloseImageFolder);
-			GdiplusShutdown(gdiplusToken);
-			CloseWindow(hBmpWnd);
-			DestroyWindow(hBmpWnd);
-
 			std::cout << std::endl;
 			std::cout << "Please Keep Target Loaded";
 			std::cout << std::endl;
@@ -503,7 +755,8 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		//===== Target Image =====
 		TIMERSTART;
 		if ((rc = MT_TargetImageScan(PortCnt)) != MTDLL_OK) { printf("MT Gain Only Image Scan error\r\n");		return -1; }
-		timefile << "Target Image	"; TIMEREND;
+		timefile << "Target Image	"; 
+		TIMEREND;
 
 #ifdef FULLYAUTO
 		TIMERSTART;
@@ -516,6 +769,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 			std::cout << "Test Continues " << std::endl;
 		}
 		else {
+			// Sleep(2000);
 			std::cout << "Please Release Target" << std::endl;
 		}
 #endif
@@ -548,6 +802,13 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		std::cout << std::endl;
 		std::cout << std::endl;
 
+		// Close the Image Window
+		if (imageWnd != NULL) {
+			//Sleep(5000);
+			Sleep(1000);
+			//CloseWindow(imageWnd);
+			DestroyWindow(imageWnd);
+		}
 		MT_DisplayResult(PortCnt, RunNum, PassFailOverall, Yield_All);
 		timefile << "Display Result	"; TIMEREND;
 
