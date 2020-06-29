@@ -14,7 +14,7 @@
 
  // SLK MT SW version 
 #define SLKMTSWVERSIONMAJOR	1
-#define SLKMTSWVERSIONMINOR	14
+#define SLKMTSWVERSIONMINOR	15
 
 //#include "resource.h"
 //#pragma comment(lib, "user32")
@@ -559,9 +559,18 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		timefile << "Init LOG	"; TIMEREND;
 
 		std::string SNLogFileName(reinterpret_cast<char*>(SNLogFile[0]));
-		std::string substr = "_TargetImage.bmp";
-		ImgFileName = SNLogFileName;
-		ImgFileName.replace(ImgFileName.begin()+ImgFileName.length()-4, ImgFileName.end(), substr.begin(), substr.end());
+		if (testCase == INVS_TEST_CASE_4)
+		{
+			std::string substr = "_TargetImage.bmp";
+			ImgFileName = SNLogFileName;
+			ImgFileName.replace(ImgFileName.begin() + ImgFileName.length() - 4, ImgFileName.end(), substr.begin(), substr.end());
+		}
+		else if (testCase == INVS_TEST_CASE_2)
+		{
+			std::string substr = "_AirImage.bmp";
+			ImgFileName = SNLogFileName;
+			ImgFileName.replace(ImgFileName.begin() + ImgFileName.length() - 4, ImgFileName.end(), substr.begin(), substr.end());
+		}
 
 		// ===== Power ON =====
 		TIMERSTART;
@@ -679,12 +688,28 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		//if ((rc = GPIOWrite(PortCnt, 6, 2, 1)) != MTDLL_OK) { printf("MT GPIO Write error\r\n");		return -1; }
 		timefile << "GPIO Ld Target	"; TIMEREND;
 #else
-		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_2 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_5) {
+		if (testCase == INVS_TEST_CASE_1 || testCase == INVS_TEST_CASE_3 || testCase == INVS_TEST_CASE_5) {
 			std::cout << "This station has No Target Loading Needed " << std::endl;
 		}
 		//else if (testCase == INVS_TEST_CASE_7 ) {
 		//	std::cout << "SPI COMM Test Only, No Target Loading Needed " << std::endl;
 		//}
+		else if (testCase == INVS_TEST_CASE_2 ) {
+  			std::cout << std::endl;
+			std::cout << std::endl;
+			std::cout << "Press OK button when finished viewing the Air Image! >>";
+			std::cout << "\r\n";
+			std::cout << std::endl;
+		
+			if ((rc = MT_ImageScan(PortCnt, (char *)SNLogFile, "AirImage", false, 1)) != MTDLL_OK) { printf("MT Image Scan error\r\n");		return -1; }
+
+			imageWnd = createWindow(inst);
+			SetFocus(imageWnd);
+			sprintf_s(imagefilename, MTSTRINGMAX, "%s", ImgFileName.c_str());
+
+			displayImage(imagefilename, imageWnd);
+
+		}
 		else {
 			TIMERSTART;
 			bool Target_Ready = false;
@@ -803,8 +828,7 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		std::cout << std::endl;
 
 		// Close the Image Window
-		if (imageWnd != NULL) {
-			//Sleep(5000);
+		if ((testCase == INVS_TEST_CASE_4) && (imageWnd != NULL)) {
 			Sleep(1000);
 			//CloseWindow(imageWnd);
 			DestroyWindow(imageWnd);
@@ -844,6 +868,12 @@ int	INVS_ExecuteTestCase(unsigned char  *invsBase, unsigned char *sn, INVS_TEST_
 		//ContRun = std::cin.get();
 		ContRun = '0';
 		timefile << "User End Test	"; TIMEREND;
+		if ((testCase == INVS_TEST_CASE_2) && (imageWnd != NULL)) {
+			Sleep(3000);
+			//CloseWindow(imageWnd);
+			DestroyWindow(imageWnd);
+		}
+
 #endif
 	}
 

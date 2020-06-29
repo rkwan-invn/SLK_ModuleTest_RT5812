@@ -1,3 +1,7 @@
+6/29/2020 NP Rev 1.15
+Changes in this release are:-
+1.     Add Air Image Display for test station 2
+
 6/26/2020 NP Rev 1.14
 Changes in this release are:-
 1.     Update test stations 2 to 5 cfg files but sync up all cfg files to rev9
