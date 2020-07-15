@@ -1,3 +1,7 @@
+7/14/2020 NP Rev 1.18
+Changes in this release are:-
+1.     Update test stations 1, 2, 4 & 5 cfg files but sync up all cfg files to rev12
+
 7/2/2020 NP Rev 1.17
 Changes in this release are:-
 1.     Update test stations 2 & 5 cfg files but sync up all cfg files to rev11
