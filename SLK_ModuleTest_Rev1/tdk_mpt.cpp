@@ -14,7 +14,7 @@
 
  // SLK MT SW version 
 #define SLKMTSWVERSIONMAJOR	1
-#define SLKMTSWVERSIONMINOR	18
+#define SLKMTSWVERSIONMINOR	19
 
 //#include "resource.h"
 //#pragma comment(lib, "user32")
