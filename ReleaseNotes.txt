@@ -1,3 +1,8 @@
+9/1/2020 NP Rev 1.21
+Changes in this release are:-
+1.     Update test stations 1, 2, 4 & 5 cfg files but sync up all cfg files to rev15
+2.     Remove test station 3 cfg as it is obsolete
+
 7/27/2020 NP Rev 1.20
 Changes in this release are:-
 1.     Update test stations 4 & 5 cfg files but sync up all cfg files to rev14
